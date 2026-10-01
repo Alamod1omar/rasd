@@ -75,15 +75,112 @@ export class CompaniesService {
     });
   }
 
-  async update(id: string, data: { name?: string; status?: EntityStatus; logo?: string }) {
-    await this.findOne(id);
+  async update(
+    id: string,
+    data: { name?: string; code?: string; status?: EntityStatus; logo?: string },
+  ) {
+    const company = await this.findOne(id);
+
+    if (data.code && data.code.trim().toUpperCase() !== company.code) {
+      const existing = await this.prisma.company.findUnique({
+        where: { code: data.code.trim().toUpperCase() },
+      });
+      if (existing && existing.id !== id) {
+        throw new ConflictException('رمز الشركة مستخدم بالفعل لشركة أخرى');
+      }
+    }
+
     return this.prisma.company.update({
       where: { id },
       data: {
         ...(data.name && { name: data.name.trim() }),
+        ...(data.code && { code: data.code.trim().toUpperCase() }),
         ...(data.status && { status: data.status }),
         ...(data.logo !== undefined && { logo: data.logo }),
       },
+    });
+  }
+
+  async delete(id: string, _adminUserId: string) {
+    const company = await this.findOne(id);
+
+    return this.prisma.$transaction(async (tx) => {
+      // 1. Audit logs & Activity logs
+      await tx.activityLog.deleteMany({ where: { companyId: id } });
+      await tx.auditLog.deleteMany({ where: { companyId: id } });
+
+      // 2. Shortages (Events -> Items -> Requests)
+      const shortageRequests = await tx.shortageRequest.findMany({
+        where: { companyId: id },
+        select: { id: true },
+      });
+      const shortageReqIds = shortageRequests.map((r) => r.id);
+      if (shortageReqIds.length > 0) {
+        const shortageItems = await tx.shortageItem.findMany({
+          where: { shortageRequestId: { in: shortageReqIds } },
+          select: { id: true },
+        });
+        const shortageItemIds = shortageItems.map((i) => i.id);
+        if (shortageItemIds.length > 0) {
+          await tx.shortageItemEvent.deleteMany({
+            where: { shortageItemId: { in: shortageItemIds } },
+          });
+        }
+        await tx.shortageItem.deleteMany({
+          where: { shortageRequestId: { in: shortageReqIds } },
+        });
+        await tx.shortageRequest.deleteMany({ where: { companyId: id } });
+      }
+
+      // 3. Sales (Items -> Requests)
+      const salesRequests = await tx.salesRequest.findMany({
+        where: { companyId: id },
+        select: { id: true },
+      });
+      const salesReqIds = salesRequests.map((r) => r.id);
+      if (salesReqIds.length > 0) {
+        await tx.salesItem.deleteMany({
+          where: { salesRequestId: { in: salesReqIds } },
+        });
+        await tx.salesRequest.deleteMany({ where: { companyId: id } });
+      }
+
+      // 4. Document Sequences, Customers, Products
+      await tx.documentSequence.deleteMany({ where: { companyId: id } });
+      await tx.customer.deleteMany({ where: { companyId: id } });
+
+      const products = await tx.product.findMany({
+        where: { companyId: id },
+        select: { id: true },
+      });
+      const prodIds = products.map((p) => p.id);
+      if (prodIds.length > 0) {
+        await tx.productAlternativeNumber.deleteMany({
+          where: { productId: { in: prodIds } },
+        });
+        await tx.product.deleteMany({ where: { companyId: id } });
+      }
+
+      // 5. User branch access & users
+      const users = await tx.user.findMany({
+        where: { companyId: id },
+        select: { id: true },
+      });
+      const userIds = users.map((u) => u.id);
+      if (userIds.length > 0) {
+        await tx.userBranchAccess.deleteMany({
+          where: { userId: { in: userIds } },
+        });
+        await tx.user.deleteMany({ where: { companyId: id } });
+      }
+
+      // 6. Branches
+      await tx.branch.deleteMany({ where: { companyId: id } });
+
+      // 7. Delete the company
+      await tx.company.delete({ where: { id } });
+
+      return { success: true, message: `تم حذف شركة (${company.name}) وكافة بياناتها بنجاح` };
     });
   }
 

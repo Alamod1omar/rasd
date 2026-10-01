@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards, ForbiddenException } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -52,9 +52,15 @@ export class CompaniesController {
   @Roles(UserRole.SYSTEM_ADMIN)
   async update(
     @Param('id') id: string,
-    @Body() body: { name?: string; status?: EntityStatus; logo?: string },
+    @Body() body: { name?: string; code?: string; status?: EntityStatus; logo?: string },
   ) {
     return this.companiesService.update(id, body);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.SYSTEM_ADMIN)
+  async delete(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.companiesService.delete(id, user.id);
   }
 
   @Post(':id/initial-admin')
