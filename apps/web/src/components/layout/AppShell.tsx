@@ -23,6 +23,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Users,
+  RefreshCw,
 } from 'lucide-react';
 import { RegisterSaleModal } from '../ui/RegisterSaleModal';
 import { RegisterShortageModal } from '../ui/RegisterShortageModal';
@@ -358,6 +359,16 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                 </button>
               )}
             </div>
+
+            {/* Quick Refresh Button for Mobile Shortcut & Desktop */}
+            <button
+              onClick={() => window.location.reload()}
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all active:scale-90"
+              aria-label="تحديث الصفحة"
+              title="تحديث الصفحة"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
 
             {/* User Dropdown Profile Menu */}
             <div className="relative">

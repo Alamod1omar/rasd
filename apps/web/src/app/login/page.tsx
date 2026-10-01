@@ -105,6 +105,7 @@ export default function LoginPage() {
             type="password"
             ltr
             value={password}
+            error={errorMessage || undefined}
             onChange={(e) => {
               setPassword(e.target.value);
               if (errorMessage) setErrorMessage(null);

@@ -37,11 +37,20 @@ export async function apiRequest<T = any>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const res = await fetch(url, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
+  } catch (networkErr: any) {
+    throw new ApiError(
+      'تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت أو محاولة التحديث.',
+      'NETWORK_ERROR',
+      0,
+    );
+  }
 
   let data: any;
   try {

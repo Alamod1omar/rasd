@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next';
 import { AuthProvider } from '@/lib/auth-context';
 import { ToastProvider } from '@/lib/toast-context';
 import { PwaRegister } from '@/components/PwaRegister';
+import { PullToRefresh } from '@/components/PullToRefresh';
 
 export const metadata: Metadata = {
   title: 'رَصْد RASD | منصة تسجيل المبيعات والنواقص',
@@ -48,6 +49,7 @@ export default function RootLayout({
         <meta name="application-name" content="رَصْد RASD" />
       </head>
       <body className="bg-slate-50 min-h-screen text-slate-900 antialiased selection:bg-slate-900 selection:text-white" suppressHydrationWarning>
+        <PullToRefresh />
         <PwaRegister />
         <AuthProvider>
           <ToastProvider>
