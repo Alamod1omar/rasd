@@ -78,8 +78,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     });
   };
 
-  if (!user && pathname === '/login') {
-    return <>{children}</>;
+  if (!user) {
+    if (pathname === '/login') {
+      return <>{children}</>;
+    }
+    return null;
   }
 
   // Role flags — only active after mount to prevent hydration mismatch

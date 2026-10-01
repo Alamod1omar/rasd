@@ -6,8 +6,15 @@ import { api } from './api';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
+  // Global authentication states as per architecture requirements
+  authLoading: boolean;
+  isAuthenticated: boolean;
+  currentUser: AuthUser | null;
+
+  // Backward-compatible aliases
   user: AuthUser | null;
   loading: boolean;
+
   hasPermission: (perm: keyof UserPermissions) => boolean;
   activeBranchId: string | null;
   setActiveBranchId: (branchId: string) => void;
@@ -17,6 +24,9 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType>({
+  authLoading: true,
+  isAuthenticated: false,
+  currentUser: null,
   user: null,
   loading: true,
   hasPermission: () => false,
@@ -29,7 +39,7 @@ const AuthContext = createContext<AuthContextType>({
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeBranchId, setActiveBranchIdState] = useState<string | null>(null);
   const router = useRouter();
   const pathname = usePathname();
@@ -48,11 +58,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async () => {
+    // If no token exists in storage, finish immediately without wasteful network call
+    if (typeof window !== 'undefined') {
+      const storedToken = localStorage.getItem('rasd_token');
+      if (!storedToken) {
+        setUser(null);
+        setAuthLoading(false);
+        return;
+      }
+    }
+
     try {
       const data = await api.get<AuthUser>('/auth/me');
       data.permissions = data.permissions || getRolePermissions(data.role);
       setUser(data);
-      const savedBranch = typeof window !== 'undefined' ? localStorage.getItem('rasd_active_branch') : null;
+      const savedBranch =
+        typeof window !== 'undefined' ? localStorage.getItem('rasd_active_branch') : null;
       if (savedBranch && data.branchIds?.includes(savedBranch)) {
         setActiveBranchIdState(savedBranch);
       } else if (data.currentBranchId) {
@@ -64,27 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('rasd_token');
       }
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   };
 
   useEffect(() => {
     refreshUser();
   }, []);
-
-  useEffect(() => {
-    if (!loading) {
-      if (!user && pathname !== '/login') {
-        router.push('/login');
-      } else if (user && pathname === '/login') {
-        if (user.role === UserRole.SYSTEM_ADMIN) {
-          router.push('/admin/companies');
-        } else {
-          router.push('/');
-        }
-      }
-    }
-  }, [user, loading, pathname, router]);
 
   const login = async (username: string, password: string) => {
     const res = await api.post<{ user: AuthUser; accessToken: string }>('/auth/login', {
@@ -99,6 +106,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       permissions: res.user.permissions || getRolePermissions(res.user.role),
     };
     setUser(userWithPerms);
+    setAuthLoading(false);
+
     if (res.user.currentBranchId) {
       setActiveBranchId(res.user.currentBranchId);
     }
@@ -121,14 +130,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setUser(null);
     setActiveBranchIdState(null);
+    setAuthLoading(false);
     router.push('/login');
   };
+
+  const isAuthenticated = !authLoading && !!user;
 
   return (
     <AuthContext.Provider
       value={{
+        authLoading,
+        isAuthenticated,
+        currentUser: user,
         user,
-        loading,
+        loading: authLoading,
         hasPermission,
         activeBranchId,
         setActiveBranchId,

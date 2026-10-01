@@ -4,6 +4,7 @@ import { AuthProvider } from '@/lib/auth-context';
 import { ToastProvider } from '@/lib/toast-context';
 import { PwaRegister } from '@/components/PwaRegister';
 import { PullToRefresh } from '@/components/PullToRefresh';
+import { AuthGuard } from '@/components/auth/AuthGuard';
 
 export const metadata: Metadata = {
   title: 'رَصْد RASD | منصة تسجيل المبيعات والنواقص',
@@ -53,7 +54,9 @@ export default function RootLayout({
         <PwaRegister />
         <AuthProvider>
           <ToastProvider>
-            {children}
+            <AuthGuard>
+              {children}
+            </AuthGuard>
           </ToastProvider>
         </AuthProvider>
       </body>
