@@ -40,6 +40,14 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
 
+  // Support requests both with and without /api/v1 prefix (e.g. /auth/login -> /api/v1/auth/login)
+  app.use((req: any, _res: any, next: any) => {
+    if (!req.url.startsWith('/api/v1')) {
+      req.url = `/api/v1${req.url.startsWith('/') ? req.url : `/${req.url}`}`;
+    }
+    next();
+  });
+
   app.setGlobalPrefix('api/v1');
 
   app.useGlobalPipes(

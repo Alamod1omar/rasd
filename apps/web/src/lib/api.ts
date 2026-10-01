@@ -1,4 +1,13 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+function resolveApiBase(): string {
+  let base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+  base = base.trim().replace(/\/+$/, '');
+  if (!base.endsWith('/api/v1')) {
+    base = `${base}/api/v1`;
+  }
+  return base;
+}
+
+const API_BASE = resolveApiBase();
 
 export class ApiError extends Error {
   code: string;
