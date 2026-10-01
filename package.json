@@ -1,0 +1,11 @@
+{
+  "name": "rasd-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:api": "cd apps/api && npm run start:dev",
+    "dev:web": "cd apps/web && npm run dev",
+    "build:api": "cd apps/api && npm run build",
+    "build:web": "cd apps/web && npm run build"
+  }
+}

@@ -1,0 +1,64 @@
+services:
+  # ==========================================
+  # 1. Backend REST API Service (NestJS + Prisma)
+  # ==========================================
+  - type: web
+    name: rasd-api
+    env: node
+    rootDir: apps/api
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma db push && node dist/main
+    healthCheckPath: /api/v1/auth/me
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: rasd-postgres
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+
+  # ==========================================
+  # 2. Frontend Web Service (Next.js 14)
+  # ==========================================
+  - type: web
+    name: rasd-web
+    env: node
+    rootDir: apps/web
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run build
+    startCommand: npm run start -- -p 10000
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: rasd-api
+          envVarKey: RENDER_EXTERNAL_URL
+          suffix: /api/v1
+
+databases:
+  # ==========================================
+  # 3. Managed PostgreSQL Database
+  # ==========================================
+  - name: rasd-postgres
+    databaseName: rasd_db
+    user: rasd_user
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: 16

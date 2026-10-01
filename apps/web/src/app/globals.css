@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-cairo: 'Cairo', sans-serif;
+}
+
+body {
+  font-family: var(--font-cairo);
+  background-color: #f8fafc;
+  color: #0f172a;
+  direction: rtl;
+  text-align: right;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Isolate numbers, part numbers, and codes to LTR */
+.ltr-text {
+  direction: ltr;
+  display: inline-block;
+  unicode-bidi: isolate;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Single-axis horizontal scrollbar for registration lists */
+.custom-horizontal-scroll {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+.custom-horizontal-scroll::-webkit-scrollbar {
+  height: 5px;
+  width: 0px;
+}
+.custom-horizontal-scroll::-webkit-scrollbar-track {
+  background: #f8fafc;
+  border-radius: 9999px;
+}
+.custom-horizontal-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.custom-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ================= PRINT RULES (A4 Formal Report) ================= */
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 100% !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #__next,
+  #root,
+  div,
+  main,
+  section,
+  article,
+  .min-h-screen {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  body {
+    color: #0f172a !important;
+    font-family: var(--font-cairo) !important;
+    direction: rtl !important;
+  }
+
+  .print-page-container {
+    padding: 12mm 14mm !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 100% !important;
+  }
+
+  /* Subtle neutral backgrounds for table headers & summary only */
+  table thead tr {
+    background-color: #f1f5f9 !important;
+    background: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  table tfoot tr {
+    background-color: #f8fafc !important;
+    background: #f8fafc !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide entire AppShell navigation, sidebar, modals, and elements marked print:hidden */
+  header,
+  aside,
+  nav,
+  .no-print,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
+
+  /* Keep table headers on every printed page */
+  thead {
+    display: table-header-group !important;
+  }
+
+  /* Prevent awkward split of rows between pages */
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
