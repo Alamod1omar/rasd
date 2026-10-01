@@ -51,6 +51,8 @@ export const RegisterShortageModal: React.FC<RegisterShortageModalProps> = ({
   const { showSuccess, showError } = useToast();
   const router = useRouter();
 
+  const hasNoBranch = !activeBranchId && (!user?.branches || user.branches.length === 0) && (!user?.branchIds || user.branchIds.length === 0);
+
   // Shortage items list
   const [items, setItems] = useState<TempShortageItem[]>([]);
 
@@ -227,6 +229,12 @@ export const RegisterShortageModal: React.FC<RegisterShortageModalProps> = ({
     const cleanName = partName.trim() || cleanPart;
     const numQty = typeof quantity === 'number' ? quantity : parseFloat(String(quantity) || '0');
 
+    if (hasNoBranch) {
+      setFormError('أنت غير مرتبط بأي فرع حالياً، لا يمكن إضافة نواقص');
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل النواقص. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+
     if (!cleanPart) {
       setFormError('رقم القطعة مطلوب');
       return;
@@ -380,6 +388,11 @@ export const RegisterShortageModal: React.FC<RegisterShortageModalProps> = ({
   const totalQuantity = items.reduce((sum, it) => sum + it.quantity, 0);
 
   const handleFinalSubmit = async () => {
+    if (!activeBranchId || hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل النواقص. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+
     if (items.length === 0) {
       showError('يجب إضافة صنف واحد على الأقل قبل الحفظ');
       return;
@@ -498,6 +511,19 @@ export const RegisterShortageModal: React.FC<RegisterShortageModalProps> = ({
         </div>
       ) : (
         <div className="space-y-5">
+          {/* No Branch Warning */}
+          {hasNoBranch && (
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 text-rose-900 text-xs sm:text-sm leading-relaxed">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-sm">أنت غير مرتبط بأي فرع حالياً!</p>
+                <p className="mt-1 text-rose-700">
+                  لا يمكنك تسجيل النواقص لأن حسابك غير مربوط بأي فرع في النظام. يرجى التواصل مع مشرف الشركة لربط حسابك بالفرع التابع له لتتمكن من إضافة النواقص.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Draft Notice */}
           {hasDraftNotice && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-900">
@@ -792,7 +818,7 @@ export const RegisterShortageModal: React.FC<RegisterShortageModalProps> = ({
                   variant="danger"
                   size="md"
                   loading={loading}
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || hasNoBranch}
                   onClick={handleFinalSubmit}
                   className="flex-1 sm:flex-initial justify-center font-bold px-6"
                 >

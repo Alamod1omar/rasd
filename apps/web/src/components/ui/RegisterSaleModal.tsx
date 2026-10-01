@@ -57,6 +57,8 @@ export const RegisterSaleModal: React.FC<RegisterSaleModalProps> = ({
   const { showSuccess, showError } = useToast();
   const router = useRouter();
 
+  const hasNoBranch = !activeBranchId && (!user?.branches || user.branches.length === 0) && (!user?.branchIds || user.branchIds.length === 0);
+
   // Active Customer for Item entry (persists across items in current session as default)
   const [currentCustomer, setCurrentCustomer] = useState<SelectedCustomer | null>(null);
   const [customerError, setCustomerError] = useState<string | undefined>();
@@ -232,6 +234,12 @@ export const RegisterSaleModal: React.FC<RegisterSaleModalProps> = ({
     const numPrice = typeof unitPrice === 'number' ? unitPrice : parseFloat(String(unitPrice) || '0');
     const soldToName = currentCustomer?.name?.trim() || 'عميل نقدي';
 
+    if (hasNoBranch) {
+      setFormError('أنت غير مرتبط بأي فرع حالياً، لا يمكن إضافة أصناف');
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل المبيعات. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+
     if (!cleanPart) {
       setFormError('رقم القطعة مطلوب');
       return;
@@ -368,6 +376,11 @@ export const RegisterSaleModal: React.FC<RegisterSaleModalProps> = ({
 
   // Final Submit
   const handleFinalSubmit = async () => {
+    if (!activeBranchId || hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل المبيعات. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+
     if (items.length === 0) {
       showError('يجب إضافة صنف واحد على الأقل قبل الحفظ');
       return;
@@ -508,6 +521,19 @@ export const RegisterSaleModal: React.FC<RegisterSaleModalProps> = ({
         </div>
       ) : (
         <div className="space-y-5">
+          {/* No Branch Warning */}
+          {hasNoBranch && (
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-3 text-rose-900 text-xs sm:text-sm leading-relaxed">
+              <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold text-sm">أنت غير مرتبط بأي فرع حالياً!</p>
+                <p className="mt-1 text-rose-700">
+                  لا يمكنك تسجيل عمليات البيع لأن حسابك غير مربوط بأي فرع في النظام. يرجى التواصل مع مشرف الشركة لربط حسابك بالفرع التابع له لتتمكن من إضافة المبيعات.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Draft Restoration Notice */}
           {hasDraftNotice && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between text-xs text-amber-900">
@@ -837,7 +863,7 @@ export const RegisterSaleModal: React.FC<RegisterSaleModalProps> = ({
                   variant="emerald"
                   size="md"
                   loading={loading}
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || hasNoBranch}
                   onClick={handleFinalSubmit}
                   className="flex-1 sm:flex-initial justify-center font-bold px-6"
                 >

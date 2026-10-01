@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/lib/toast-context';
 import { UserRole } from '@/types';
 import {
   LayoutDashboard,
@@ -35,7 +36,14 @@ interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { user, logout, activeBranchId, setActiveBranchId, hasPermission } = useAuth();
+  const { showError } = useToast();
   const pathname = usePathname();
+
+  const hasNoBranch =
+    user?.role !== UserRole.SYSTEM_ADMIN &&
+    !activeBranchId &&
+    (!user?.branches || user.branches.length === 0) &&
+    (!user?.branchIds || user.branchIds.length === 0);
 
   // mounted ensures role-based rendering only happens client-side
   // preventing SSR/hydration mismatch when user is null on server
@@ -43,6 +51,22 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
 
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
   const [isShortageModalOpen, setIsShortageModalOpen] = useState(false);
+
+  const handleOpenSale = () => {
+    if (hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل المبيعات. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+    setIsSaleModalOpen(true);
+  };
+
+  const handleOpenShortage = () => {
+    if (hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل النواقص. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+    setIsShortageModalOpen(true);
+  };
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobilePlusOpen, setIsMobilePlusOpen] = useState(false);
@@ -189,7 +213,12 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                   </div>
                 ) : user.branches && user.branches.length === 1 ? (
                   <p className="text-[11px] text-slate-500 mt-0.5 truncate">{user.branches[0].name}</p>
-                ) : null}
+                ) : (
+                  <p className="text-[11px] text-amber-600 font-bold mt-0.5 truncate flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                    <span>غير مرتبط بأي فرع</span>
+                  </p>
+                )}
               </>
             ) : (
               <span className="text-[10px] font-bold text-slate-500 truncate block" title={user.companyName}>
@@ -296,7 +325,10 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
                       {user.branches[0].name}
                     </span>
                   ) : (
-                    <span className="font-extrabold text-sm text-slate-900">رَصْد</span>
+                    <span className="text-[10px] font-bold text-amber-600 truncate flex items-center gap-1">
+                      <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                      <span>غير مرتبط بفرع</span>
+                    </span>
                   )}
                 </div>
               ) : (
@@ -345,7 +377,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             <div className="hidden sm:flex items-center gap-2" suppressHydrationWarning>
               {(!mounted || hasPermission('sales.create')) && (
                 <button
-                  onClick={() => setIsSaleModalOpen(true)}
+                  onClick={handleOpenSale}
                   className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -354,7 +386,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
               )}
               {(!mounted || hasPermission('shortages.create')) && (
                 <button
-                  onClick={() => setIsShortageModalOpen(true)}
+                  onClick={handleOpenShortage}
                   className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm active:scale-95"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -505,7 +537,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             <button
               onClick={() => {
                 setIsMobilePlusOpen(false);
-                setIsSaleModalOpen(true);
+                handleOpenSale();
               }}
               className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-900 text-white font-bold text-base shadow-sm active:scale-98 transition-all"
             >
@@ -522,7 +554,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             <button
               onClick={() => {
                 setIsMobilePlusOpen(false);
-                setIsShortageModalOpen(true);
+                handleOpenShortage();
               }}
               className="w-full flex items-center justify-between p-4 rounded-2xl bg-rose-600 text-white font-bold text-base shadow-sm active:scale-98 transition-all"
             >

@@ -63,6 +63,20 @@ export default function SalesPage() {
   const [printingId, setPrintingId] = useState<string | null>(null);
   const { showError } = useToast();
 
+  const hasNoBranch =
+    user?.role !== UserRole.SYSTEM_ADMIN &&
+    !activeBranchId &&
+    (!user?.branches || user.branches.length === 0) &&
+    (!user?.branchIds || user.branchIds.length === 0);
+
+  const handleOpenSaleModal = () => {
+    if (hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل المبيعات. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
   const handleQuickPrint = async (saleId: string) => {
     setPrintingId(saleId);
     try {
@@ -221,7 +235,7 @@ export default function SalesPage() {
               variant="primary"
               size="md"
               icon={<Plus className="w-4 h-4" />}
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenSaleModal}
             >
               تسجيل بيع
             </RasdButton>

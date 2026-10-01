@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAuth } from '@/lib/auth-context';
+import { useToast } from '@/lib/toast-context';
 import { api } from '@/lib/api';
 import { DashboardSummary, SalesRequestStatus, ShortageRequestStatus } from '@/types';
 import { RasdBadge } from '@/components/ui/RasdBadge';
@@ -27,8 +28,15 @@ import { UserRole } from '@/types';
 
 export default function HomePage() {
   const { user, activeBranchId, hasPermission } = useAuth();
+  const { showError } = useToast();
   const router = useRouter();
   const canViewAmounts = hasPermission('sales.amount.view');
+
+  const hasNoBranch =
+    user?.role !== UserRole.SYSTEM_ADMIN &&
+    !activeBranchId &&
+    (!user?.branches || user.branches.length === 0) &&
+    (!user?.branchIds || user.branchIds.length === 0);
 
   useEffect(() => {
     if (user && user.role === UserRole.SYSTEM_ADMIN) {
@@ -39,6 +47,22 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [saleModalOpen, setSaleModalOpen] = useState(false);
   const [shortageModalOpen, setShortageModalOpen] = useState(false);
+
+  const handleOpenSale = () => {
+    if (hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل المبيعات. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+    setSaleModalOpen(true);
+  };
+
+  const handleOpenShortage = () => {
+    if (hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل النواقص. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+    setShortageModalOpen(true);
+  };
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -69,11 +93,24 @@ export default function HomePage() {
   return (
     <AppShell>
       <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+        {/* Unassigned Branch Warning Banner */}
+        {hasNoBranch && (
+          <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-amber-900 text-xs sm:text-sm">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold">حسابك غير مرتبط بأي فرع حالياً</p>
+              <p className="text-amber-700 mt-0.5">
+                لتتمكن من تسجيل المبيعات والنواقص ومتابعة حركة القطع، يرجى مراجعة مشرف الشركة لربط حسابك بأحد الفروع.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ================= SECTION 12: THE TWO PRIMARY ACTION BUTTONS ================= */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Action 1: تسجيل بيع */}
           <button
-            onClick={() => setSaleModalOpen(true)}
+            onClick={handleOpenSale}
             className="group relative overflow-hidden rounded-2xl bg-slate-900 p-6 sm:p-7 text-right text-white shadow-xl shadow-slate-900/10 hover:shadow-2xl hover:shadow-slate-900/20 hover:bg-slate-800 transition-all duration-200 active:scale-[0.99] border border-slate-800"
           >
             <div className="flex items-center justify-between">
@@ -94,7 +131,7 @@ export default function HomePage() {
 
           {/* Action 2: تسجيل نقص */}
           <button
-            onClick={() => setShortageModalOpen(true)}
+            onClick={handleOpenShortage}
             className="group relative overflow-hidden rounded-2xl bg-rose-600 p-6 sm:p-7 text-right text-white shadow-xl shadow-rose-900/10 hover:shadow-2xl hover:shadow-rose-900/20 hover:bg-rose-700 transition-all duration-200 active:scale-[0.99] border border-rose-500"
           >
             <div className="flex items-center justify-between">

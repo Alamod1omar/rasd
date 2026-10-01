@@ -17,10 +17,13 @@ export class SalesService {
 
   private validateBranchAccess(user: AuthUser, branchId: string) {
     if (user.role === UserRole.SYSTEM_ADMIN) {
-      throw new ForbiddenException('مدير النظام لا يشارك في العمليات التشغيلية');
+      throw new ForbiddenException('مدير المنصة لا يشارك في العمليات التشغيلية');
+    }
+    if (user.role === UserRole.OPERATOR && (!user.branchIds || user.branchIds.length === 0)) {
+      throw new BadRequestException('المستخدم غير مرتبط بأي فرع حالياً، لا يمكن إتمام العملية. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
     }
     if (user.role === UserRole.OPERATOR && !user.branchIds.includes(branchId)) {
-      throw new ForbiddenException('ليس لديك صلاحية على هذا الفرع');
+      throw new ForbiddenException('المستخدم غير مرتبط بهذا الفرع، لا يمكن تسجيل العمليات');
     }
   }
 
@@ -147,8 +150,8 @@ export class SalesService {
     }
 
     const branchId = dto.branchId || user.currentBranchId;
-    if (!branchId) {
-      throw new BadRequestException('يجب تحديد الفرع لتسجيل البيع');
+    if (!branchId || (user.role === UserRole.OPERATOR && (!user.branchIds || user.branchIds.length === 0))) {
+      throw new BadRequestException('المستخدم غير مرتبط بأي فرع حالياً، لا يمكن تسجيل المبيعات. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
     }
 
     this.validateBranchAccess(user, branchId);

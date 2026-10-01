@@ -59,6 +59,20 @@ export default function ShortagesPage() {
   const [printingId, setPrintingId] = useState<string | null>(null);
   const { showError } = useToast();
 
+  const hasNoBranch =
+    user?.role !== UserRole.SYSTEM_ADMIN &&
+    !activeBranchId &&
+    (!user?.branches || user.branches.length === 0) &&
+    (!user?.branchIds || user.branchIds.length === 0);
+
+  const handleOpenShortageModal = () => {
+    if (hasNoBranch) {
+      showError('أنت غير مرتبط بأي فرع حالياً، لا يمكنك تسجيل النواقص. يرجى مراجعة إدارة الشركة لربط حسابك بفرع.');
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
   const handleQuickPrint = async (shortageId: string) => {
     setPrintingId(shortageId);
     try {
@@ -210,7 +224,7 @@ export default function ShortagesPage() {
               variant="danger"
               size="md"
               icon={<Plus className="w-4 h-4" />}
-              onClick={() => setIsModalOpen(true)}
+              onClick={handleOpenShortageModal}
             >
               تسجيل نقص
             </RasdButton>
