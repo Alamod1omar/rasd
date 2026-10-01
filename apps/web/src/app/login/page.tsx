@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/lib/toast-context';
 import { RasdButton } from '@/components/ui/RasdButton';
 import { RasdInput } from '@/components/ui/RasdInput';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberDevice, setRememberDevice] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   // Auto-fill if "Remember This Device" was enabled
@@ -32,20 +33,24 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    setErrorMessage(null);
+
+    const cleanUser = username.trim();
+    if (!cleanUser || !password) {
+      setErrorMessage('يرجى إدخال اسم المستخدم وكلمة المرور');
       showError('يرجى إدخال اسم المستخدم وكلمة المرور');
       return;
     }
 
     setLoading(true);
     try {
-      await login(username.trim(), password);
+      await login(cleanUser, password);
 
       // Save or clear credentials based on "Remember This Device"
       if (typeof window !== 'undefined') {
         if (rememberDevice) {
           localStorage.setItem('rasd_remember_device', 'true');
-          localStorage.setItem('rasd_saved_username', username.trim());
+          localStorage.setItem('rasd_saved_username', cleanUser);
           localStorage.setItem('rasd_saved_password', password);
         } else {
           localStorage.removeItem('rasd_remember_device');
@@ -54,7 +59,9 @@ export default function LoginPage() {
         }
       }
     } catch (err: any) {
-      showError(err.message || 'فشل تسجيل الدخول، يرجى التأكد من البيانات المدخلة');
+      const msg = err.message || 'اسم المستخدم أو كلمة المرور غير صحيحة';
+      setErrorMessage(msg);
+      showError(msg);
     } finally {
       setLoading(false);
     }
@@ -62,7 +69,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200/80 p-8 sm:p-10 space-y-8 animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-200/80 p-8 sm:p-10 space-y-7 animate-in fade-in zoom-in-95 duration-200">
         {/* Brand Header */}
         <div className="text-center space-y-3">
           <img src="/logo.png" alt="رَصْد RASD" className="w-16 h-16 object-contain mx-auto rounded-2xl shadow-sm" />
@@ -70,13 +77,24 @@ export default function LoginPage() {
           <p className="text-xs text-slate-500 font-medium">نظام رصد المبيعات السريعة والقطع الناقصة لقطع الغيار</p>
         </div>
 
+        {/* Prominent Error Banner */}
+        {errorMessage && (
+          <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-2.5 text-xs font-bold text-rose-700 animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <RasdInput
             label="اسم المستخدم"
             ltr
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+              setUsername(e.target.value);
+              if (errorMessage) setErrorMessage(null);
+            }}
             placeholder="username"
             autoFocus={!username}
             required
@@ -87,7 +105,10 @@ export default function LoginPage() {
             type="password"
             ltr
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              if (errorMessage) setErrorMessage(null);
+            }}
             placeholder="••••••••"
             required
           />
@@ -116,7 +137,7 @@ export default function LoginPage() {
             variant="primary"
             size="lg"
             loading={loading}
-            className="w-full font-bold shadow-md cursor-pointer"
+            className="w-full font-bold shadow-md cursor-pointer mt-2"
           >
             تسجيل الدخول
           </RasdButton>
