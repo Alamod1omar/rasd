@@ -13,6 +13,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { SearchModule } from './search/search.module';
 import { CustomersModule } from './customers/customers.module';
 import { BackupModule } from './backup/backup.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -31,5 +32,6 @@ import { BackupModule } from './backup/backup.module';
     SearchModule,
     BackupModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}

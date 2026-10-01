@@ -8,9 +8,9 @@ services:
     rootDir: apps/api
     plan: free
     region: frankfurt
-    buildCommand: npm install && npx prisma generate && npm run build
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
     startCommand: npx prisma db push && node dist/main
-    healthCheckPath: /api/v1/auth/me
+    healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_ENV
         value: production
@@ -38,8 +38,8 @@ services:
     rootDir: apps/web
     plan: free
     region: frankfurt
-    buildCommand: npm install && npm run build
-    startCommand: npm run start -- -p 10000
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run start
     envVars:
       - key: NODE_ENV
         value: production
