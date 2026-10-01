@@ -816,8 +816,8 @@ export const RegisterSaleModal: React.FC<RegisterSaleModalProps> = ({
           )}
 
           {/* Sticky Summary & Submit Bar */}
-          <div className="sticky bottom-0 bg-white pt-3 border-t border-slate-200 -mx-6 px-6 -mb-6 pb-6 shadow-lg sm:shadow-none">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900 text-white p-3.5 rounded-2xl">
+          <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm pt-3 border-t border-slate-200 mt-4 pb-2 z-10">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-900 text-white p-3.5 rounded-2xl shadow-lg">
               <div className="flex items-center gap-4 text-xs">
                 <div>
                   <span className="text-slate-400 block text-[10px]">الأصناف / القطع</span>
